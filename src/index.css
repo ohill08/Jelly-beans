@@ -1,0 +1,66 @@
+:root {
+  --text: #4b4557;
+  --text-h: #1c1a24;
+  --bg: #faf8fb;
+  --card-bg: #ffffff;
+  --border: #e6e2ec;
+  --shadow: rgba(30, 20, 50, 0.08) 0 10px 30px -10px, rgba(30, 20, 50, 0.06) 0 4px 10px -4px;
+
+  --gold: #f4b400;
+  --gold-dark: #b8860b;
+  --green: #4caf6b;
+  --green-dark: #2e7d4f;
+  --red: #e5484d;
+  --red-dark: #a5292d;
+
+  --glass: rgba(205, 226, 240, 0.55);
+  --glass-edge: rgba(140, 175, 200, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font: 17px/150% var(--sans);
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #b9b4c4;
+    --text-h: #f3f1f7;
+    --bg: #17151d;
+    --card-bg: #201d29;
+    --border: #322e3d;
+    --shadow: rgba(0, 0, 0, 0.4) 0 10px 30px -10px, rgba(0, 0, 0, 0.3) 0 4px 10px -4px;
+    --glass: rgba(120, 150, 180, 0.16);
+    --glass-edge: rgba(160, 195, 220, 0.4);
+    --glass-highlight: rgba(255, 255, 255, 0.16);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
