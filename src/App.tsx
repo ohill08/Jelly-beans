@@ -99,8 +99,8 @@ function App() {
             </button>
           )}
           <p className="scoring-note">
-            Gold = every healthy box ticked · Green = at least half · Red = fewer than half.
-            Come back tomorrow for your next jelly bean.
+            Gold = ate healthily, no alcohol, exercised &amp; HRV above 65 · Green = ate healthily and no alcohol ·
+            Red = didn't eat healthily and/or drank alcohol. Come back tomorrow for your next jelly bean.
           </p>
         </>
       )}
