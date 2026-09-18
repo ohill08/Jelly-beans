@@ -4,6 +4,11 @@ interface Props {
   fitness: number; // 0..1
 }
 
+interface Pt {
+  x: number;
+  y: number;
+}
+
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
@@ -16,27 +21,106 @@ function lerpColor(c1: [number, number, number], c2: [number, number, number], t
 }
 
 /** A point `length` away from `base`, at `angleDeg` measured clockwise from straight down. */
-function project(base: { x: number; y: number }, length: number, angleDeg: number) {
+function project(base: Pt, length: number, angleDeg: number): Pt {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: base.x + length * Math.sin(rad), y: base.y + length * Math.cos(rad) };
 }
 
+function mid(a: Pt, b: Pt): Pt {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+/** A smooth curve that runs through every point in `pts`, via quadratic beziers through their midpoints. */
+function smoothThrough(pts: Pt[]): string {
+  let d = `L ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    d += ` Q ${pts[i].x} ${pts[i].y} ${mid(pts[i], pts[i + 1]).x} ${mid(pts[i], pts[i + 1]).y}`;
+  }
+  const last = pts[pts.length - 1];
+  d += ` L ${last.x} ${last.y}`;
+  return d;
+}
+
+function normal(a: Pt, b: Pt): Pt {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: -dy / len, y: dx / len };
+}
+
+/** Builds a tapered tube through `points`, each with its own width, rounded off at the last point. */
+function buildLimb(points: Pt[], widths: number[]): string {
+  const left: Pt[] = [];
+  const right: Pt[] = [];
+  for (let i = 0; i < points.length; i++) {
+    const prev = points[i - 1];
+    const next = points[i + 1];
+    let n: Pt;
+    if (prev && next) {
+      const n1 = normal(prev, points[i]);
+      const n2 = normal(points[i], next);
+      const combined = { x: n1.x + n2.x, y: n1.y + n2.y };
+      const len = Math.hypot(combined.x, combined.y) || 1;
+      n = { x: combined.x / len, y: combined.y / len };
+    } else if (next) {
+      n = normal(points[i], next);
+    } else {
+      n = normal(prev, points[i]);
+    }
+    const w = widths[i] / 2;
+    left.push({ x: points[i].x + n.x * w, y: points[i].y + n.y * w });
+    right.push({ x: points[i].x - n.x * w, y: points[i].y - n.y * w });
+  }
+  const capR = widths[widths.length - 1] / 2;
+  const rightRev = [...right].reverse();
+  return [
+    `M ${left[0].x} ${left[0].y}`,
+    ...left.slice(1).map((p) => `L ${p.x} ${p.y}`),
+    `A ${capR} ${capR} 0 1 1 ${rightRev[0].x} ${rightRev[0].y}`,
+    ...rightRev.slice(1).map((p) => `L ${p.x} ${p.y}`),
+    'Z',
+  ].join(' ');
+}
+
+/** Builds a smooth closed torso silhouette from vertical width levels, mirrored left/right. */
+function buildTorso(cx: number, topCenter: Pt, levels: { y: number; half: number }[], hemY: number, hemCenterHalf: number): string {
+  const right = levels.map((l) => ({ x: cx + l.half, y: l.y }));
+  const left = levels.map((l) => ({ x: cx - l.half, y: l.y })).reverse();
+  return [
+    `M ${topCenter.x} ${topCenter.y}`,
+    `Q ${right[0].x} ${topCenter.y} ${right[0].x} ${right[0].y}`,
+    smoothThrough(right),
+    `Q ${cx + hemCenterHalf} ${hemY} ${cx} ${hemY}`,
+    `Q ${cx - hemCenterHalf} ${hemY} ${left[0].x} ${left[0].y}`,
+    smoothThrough(left),
+    `Q ${topCenter.x} ${topCenter.y} ${topCenter.x} ${topCenter.y}`,
+    'Z',
+  ].join(' ');
+}
+
 /**
- * A male "coach" figure whose posture, expression, grooming, skin tone and
- * physique interpolate continuously with `fitness` (0..1) — driven by how
- * many gold/green beans the user has earned recently. Low scores read as
- * run-down: pale/sallow skin, under-eye circles, stubble, mussed hair,
- * a wrinkled shirt and a rounder, more hunched frame. High scores read as
- * upright, groomed, glowing and athletic.
+ * A male "coach" figure whose build, posture, grooming and expression
+ * interpolate continuously with `fitness` (0..1) — driven by how many
+ * gold/green beans the user has earned recently. Low scores read as
+ * heavier through the middle, hunched, pale and unkempt; high scores read
+ * as lean, upright, groomed and energised.
  */
 export default function AvatarCoach({ fitness }: Props) {
   const f = Math.max(0, Math.min(1, fitness));
+  const cx = 70;
 
-  const lean = lerp(9, 0, f); // forward slouch when low
-  const hunch = lerp(6, 0, f); // rounded shoulders when low
-  const shoulderHalf = lerp(20, 26, f);
-  const waistHalf = lerp(22, 16.5, f);
-  const bellyBulge = lerp(7, 0, f);
+  const lean = lerp(10, 0, f); // forward slouch when low
+  const hunch = lerp(7, 0, f); // rounded shoulders when low
+
+  // Torso silhouette: shoulders stay fairly stable, but the waist/hip swing
+  // hard between a heavy overhang (low) and an athletic taper (high).
+  const shoulderHalf = lerp(21, 28, f);
+  const chestHalf = lerp(25, 27, f);
+  const waistHalf = lerp(34, 17, f);
+  const hipHalf = lerp(28, 19, f);
+  const armThickness = lerp(1.25, 0.95, f);
+  const legThickness = lerp(1.2, 0.95, f);
+
   const shirtColor = lerpColor([150, 150, 140], [27, 176, 150], f);
   const skinColor = lerpColor([201, 196, 176], [240, 195, 154], f); // sallow -> warm/healthy
   const mouthCurve = lerp(-6, 7, f); // negative = frown, positive = smile
@@ -45,146 +129,208 @@ export default function AvatarCoach({ fitness }: Props) {
   const underEye = lerp(0.6, 0, f);
   const stubble = lerp(0.55, 0, f);
   const blush = lerp(0, 0.4, Math.max(0, f - 0.5) * 2);
-  const wrinkles = lerp(0.5, 0, f);
+  const wrinkles = lerp(0.6, 0, f);
   const messyHair = lerp(1, 0, Math.min(1, f / 0.6));
+  const jowl = lerp(1, 0, Math.min(1, f / 0.55));
+  const headRx = lerp(19.5, 17, f);
 
-  const topY = 58;
-  const botY = 103;
-  const midY = (topY + botY) / 2 + 8;
-  const torsoPath = `
-    M ${60 - shoulderHalf} ${topY}
-    Q 60 ${topY - 6 + hunch} ${60 + shoulderHalf} ${topY}
-    Q ${60 + waistHalf + bellyBulge} ${midY} ${60 + waistHalf} ${botY}
-    Q 60 ${botY + 5} ${60 - waistHalf} ${botY}
-    Q ${60 - waistHalf - bellyBulge} ${midY} ${60 - shoulderHalf} ${topY}
-    Z
-  `;
+  const topY = 66;
+  const chestY = 82;
+  const waistY = 104;
+  const hipY = 122;
+  const kneeY = 142;
+  const ankleY = 160;
+
+  const topCenter = { x: cx, y: topY - 7 + hunch };
+  const torsoPath = buildTorso(
+    cx,
+    topCenter,
+    [
+      { y: topY, half: shoulderHalf },
+      { y: chestY, half: chestHalf },
+      { y: waistY, half: waistHalf },
+      { y: hipY, half: hipHalf },
+    ],
+    hipY + 6,
+    hipHalf * 0.5,
+  );
+
+  // Arms swing outward enough to clear a wider waist, so a heavier build
+  // doesn't just bury them in the belly silhouette.
+  const bellyClear = Math.max(0, waistHalf - shoulderHalf);
 
   // Left-screen arm: flexes into a bicep curl as fitness rises.
-  const leftShoulder = { x: 60 - shoulderHalf + 4, y: topY + 5 };
-  const leftUpperAngle = -lerp(9, 22, f);
-  const leftElbow = project(leftShoulder, 19, leftUpperAngle);
-  const leftForearmAngle = lerp(-15, -165, f);
-  const leftHand = project(leftElbow, 16, leftForearmAngle);
-  const bicepMid = project(leftShoulder, 10, leftUpperAngle);
+  const leftShoulder = { x: cx - shoulderHalf + 5, y: topY + 6 };
+  const leftUpperAngle = -(lerp(9, 22, f) + bellyClear * 1.1);
+  const leftElbow = project(leftShoulder, 21, leftUpperAngle);
+  const leftForearmAngle = lerp(-14, -165, f) - bellyClear * 0.6;
+  const leftHand = project(leftElbow, 17, leftForearmAngle);
+  const leftHandR = 5 * armThickness;
+  const leftArmPath = buildLimb(
+    [leftShoulder, leftElbow, leftHand],
+    [11.5 * armThickness, 9 * armThickness, leftHandR * 2],
+  );
+  const bicepMid = project(leftShoulder, 11, leftUpperAngle);
 
   // Right-screen arm: stays relaxed, drooping more when tired.
-  const rightShoulder = { x: 60 + shoulderHalf - 4, y: topY + 5 };
-  const rightUpperAngle = lerp(16, 5, f);
-  const rightElbow = project(rightShoulder, 18, rightUpperAngle);
-  const rightForearmAngle = lerp(24, 6, f);
-  const rightHand = project(rightElbow, 16, rightForearmAngle);
+  const rightShoulder = { x: cx + shoulderHalf - 5, y: topY + 6 };
+  const rightUpperAngle = lerp(17, 5, f) + bellyClear * 1.1;
+  const rightElbow = project(rightShoulder, 20, rightUpperAngle);
+  const rightForearmAngle = lerp(26, 6, f) + bellyClear * 0.6;
+  const rightHand = project(rightElbow, 17, rightForearmAngle);
+  const rightHandR = 5 * armThickness;
+  const rightArmPath = buildLimb(
+    [rightShoulder, rightElbow, rightHand],
+    [11.5 * armThickness, 9 * armThickness, rightHandR * 2],
+  );
 
-  const armPath = (shoulder: { x: number; y: number }, elbow: { x: number; y: number }, hand: { x: number; y: number }) =>
-    `M ${shoulder.x} ${shoulder.y} L ${elbow.x} ${elbow.y} L ${hand.x} ${hand.y}`;
+  // Legs: mostly vertical, widths taper knee -> ankle.
+  const leftHip = { x: cx - hipHalf * 0.55, y: hipY + 4 };
+  const leftKnee = { x: cx - hipHalf * 0.5, y: kneeY };
+  const leftAnkle = { x: cx - hipHalf * 0.45, y: ankleY };
+  const rightHip = { x: cx + hipHalf * 0.55, y: hipY + 4 };
+  const rightKnee = { x: cx + hipHalf * 0.5, y: kneeY };
+  const rightAnkle = { x: cx + hipHalf * 0.45, y: ankleY };
+  const legWidths = [17 * legThickness, 13.5 * legThickness, 10.5 * legThickness];
+  const leftLegPath = buildLimb([leftHip, leftKnee, leftAnkle], legWidths);
+  const rightLegPath = buildLimb([rightHip, rightKnee, rightAnkle], legWidths);
 
   const showSweat = f < 0.32;
   const showSparkle = f >= 0.75;
 
-  // Stubble dots scattered along the jawline, fading out as fitness rises.
   const stubbleDots = [
-    [46.5, 41], [48.5, 43.5], [51, 45.5], [54, 47], [57, 47.8],
-    [63, 47.8], [66, 47], [69, 45.5], [71.5, 43.5], [73.5, 41],
-  ];
+    [cx - 24, 44], [cx - 21.5, 46.5], [cx - 18, 48.5], [cx - 14, 50], [cx - 10, 50.8],
+    [cx + 10, 50.8], [cx + 14, 50], [cx + 18, 48.5], [cx + 21.5, 46.5], [cx + 24, 44],
+  ] as const;
 
   return (
     <div className="avatar-coach">
-      <svg viewBox="0 0 120 150" width="84" height="105" role="img" aria-label={fitnessLabel(f)}>
+      <svg viewBox="0 0 140 172" width="92" height="113" role="img" aria-label={fitnessLabel(f)}>
         <defs>
-          <radialGradient id="coachGlow" cx="50%" cy="42%" r="55%">
+          <radialGradient id="coachGlow" cx="50%" cy="40%" r="55%">
             <stop offset="0%" stopColor="#ffd54a" stopOpacity={glow} />
             <stop offset="100%" stopColor="#ffd54a" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="coachShade" x1="0" y1="0" x2="1" y2="0.2">
-            <stop offset="0%" stopColor="#fff" stopOpacity="0.16" />
-            <stop offset="60%" stopColor="#fff" stopOpacity="0" />
+            <stop offset="0%" stopColor="#fff" stopOpacity="0.18" />
+            <stop offset="55%" stopColor="#fff" stopOpacity="0" />
+            <stop offset="100%" stopColor="#000" stopOpacity="0.16" />
+          </linearGradient>
+          <linearGradient id="limbShade" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#fff" stopOpacity="0.12" />
             <stop offset="100%" stopColor="#000" stopOpacity="0.14" />
           </linearGradient>
         </defs>
 
-        <circle cx="60" cy="62" r="58" fill="url(#coachGlow)" />
-        <ellipse cx="60" cy="138" rx="25" ry="4.5" fill="rgba(20, 15, 30, 0.14)" />
+        <circle cx={cx} cy="65" r="66" fill="url(#coachGlow)" />
+        <ellipse cx={cx} cy="166" rx="30" ry="4.8" fill="rgba(20, 15, 30, 0.14)" />
 
-        {/* legs (fixed — the figure stands planted regardless of posture) */}
-        <rect x="47" y="101" width="11" height="32" rx="5" fill="#3b3450" />
-        <rect x="62" y="101" width="11" height="32" rx="5" fill="#3b3450" />
-        <rect x="45" y="129" width="15" height="7" rx="3.5" fill="#241f30" />
-        <rect x="60" y="129" width="15" height="7" rx="3.5" fill="#241f30" />
+        <g transform={`rotate(${lean} ${cx} ${hipY})`}>
+          {/* legs, fixed stance */}
+          <path d={leftLegPath} fill="#3b3450" stroke="rgba(0,0,0,0.2)" strokeWidth="0.6" />
+          <path d={leftLegPath} fill="url(#limbShade)" />
+          <path d={rightLegPath} fill="#3b3450" stroke="rgba(0,0,0,0.2)" strokeWidth="0.6" />
+          <path d={rightLegPath} fill="url(#limbShade)" />
+          <ellipse cx={leftAnkle.x} cy={ankleY + 7} rx="10.5" ry="5.5" fill="#241f30" />
+          <ellipse cx={rightAnkle.x} cy={ankleY + 7} rx="10.5" ry="5.5" fill="#241f30" />
 
-        <g transform={`rotate(${lean} 60 100)`}>
-          {/* ears, behind the head */}
-          <ellipse cx="41.5" cy="36" rx="2.6" ry="4" fill={skinColor} />
-          <ellipse cx="78.5" cy="36" rx="2.6" ry="4" fill={skinColor} />
-
-          {/* relaxed arm, drawn behind torso */}
-          <path
-            d={armPath(rightShoulder, rightElbow, rightHand)}
-            stroke={skinColor}
-            strokeWidth="9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <circle cx={rightHand.x} cy={rightHand.y} r="5.2" fill={skinColor} />
-
-          {/* flexing arm */}
-          <path
-            d={armPath(leftShoulder, leftElbow, leftHand)}
-            stroke={skinColor}
-            strokeWidth="9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <circle cx={leftHand.x} cy={leftHand.y} r="5.2" fill={skinColor} />
-          <circle cx={bicepMid.x} cy={bicepMid.y} r={lerp(0, 6.5, f)} fill={skinColor} opacity={f > 0.15 ? 1 : 0} />
-
-          {/* torso */}
-          <path d={torsoPath} fill={shirtColor} />
+          {/* torso + shirt, drawn before the arms so a wide waist doesn't swallow them */}
+          <path d={torsoPath} fill={shirtColor} stroke="rgba(0,0,0,0.16)" strokeWidth="0.7" />
           <path d={torsoPath} fill="url(#coachShade)" />
-          <g stroke="rgba(30, 20, 10, 0.35)" strokeWidth="1.3" fill="none" opacity={wrinkles} strokeLinecap="round">
-            <path d={`M ${60 - waistHalf + 5} ${botY - 16} q 9 5 18 0`} />
-            <path d={`M ${60 - waistHalf + 7} ${botY - 7} q 11 5 22 0`} />
+          <path
+            d={`M ${cx - shoulderHalf * 0.6} ${topY - 5} Q ${cx} ${topY + 6} ${cx + shoulderHalf * 0.6} ${topY - 5}`}
+            fill="none"
+            stroke="rgba(0,0,0,0.22)"
+            strokeWidth="1.1"
+          />
+          <g stroke="rgba(30, 20, 10, 0.32)" strokeWidth="1.2" fill="none" opacity={wrinkles} strokeLinecap="round">
+            <path d={`M ${cx - waistHalf + 6} ${waistY - 6} q 10 5 20 0`} />
+            <path d={`M ${cx - waistHalf + 8} ${waistY + 6} q 12 5 24 0`} />
           </g>
 
-          {/* neck + head */}
-          <rect x="55" y="49" width="10" height="11" fill={skinColor} />
-          <circle cx="60" cy="35" r="17.5" fill={skinColor} />
-          <circle cx="60" cy="35" r="17.5" fill="url(#coachShade)" />
+          {/* ears, behind the head */}
+          <ellipse cx={cx - headRx - 2} cy="39" rx="2.8" ry="4.4" fill={skinColor} />
+          <ellipse cx={cx + headRx + 2} cy="39" rx="2.8" ry="4.4" fill={skinColor} />
+
+          {/* relaxed arm, drawn in front of the torso */}
+          <path d={rightArmPath} fill={skinColor} stroke="rgba(120,70,40,0.25)" strokeWidth="0.6" />
+          <path d={rightArmPath} fill="url(#limbShade)" />
+          <circle cx={rightElbow.x} cy={rightElbow.y} r={4.5 * armThickness} fill={skinColor} />
+          <circle cx={rightHand.x} cy={rightHand.y} r={rightHandR} fill={skinColor} stroke="rgba(120,70,40,0.3)" strokeWidth="0.5" />
+
+          {/* flexing arm */}
+          <path d={leftArmPath} fill={skinColor} stroke="rgba(120,70,40,0.25)" strokeWidth="0.6" />
+          <path d={leftArmPath} fill="url(#limbShade)" />
+          <circle cx={leftElbow.x} cy={leftElbow.y} r={4.5 * armThickness} fill={skinColor} />
+          <circle cx={leftHand.x} cy={leftHand.y} r={leftHandR} fill={skinColor} stroke="rgba(120,70,40,0.3)" strokeWidth="0.5" />
+          <circle cx={bicepMid.x} cy={bicepMid.y} r={lerp(0, 7, f)} fill={skinColor} opacity={f > 0.15 ? 1 : 0} />
+
+          {/* neck (tapered) + jowl/double-chin that fades in when fitness is low */}
+          <path d={`M ${cx - 8} 50 L ${cx + 8} 50 L ${cx + 6.5} 63 L ${cx - 6.5} 63 Z`} fill={skinColor} />
+          <ellipse cx={cx} cy={55} rx={lerp(11, 5, 1 - jowl)} ry={lerp(5.5, 1.5, 1 - jowl)} fill={skinColor} opacity={jowl} />
+
+          {/* head */}
+          <ellipse cx={cx} cy="37" rx={headRx} ry="19" fill={skinColor} />
+          <ellipse cx={cx} cy="37" rx={headRx} ry="19" fill="url(#coachShade)" />
 
           {/* hair: neat base cap, plus stray cowlicks that fade in as grooming slips */}
-          <path d="M 43.5 32 Q 44 15 60 15 Q 76 15 76.5 32 Q 68 24 60 25 Q 52 24 43.5 32 Z" fill="#4a3324" />
-          <g stroke="#4a3324" strokeWidth="2" strokeLinecap="round" opacity={messyHair}>
-            <path d="M46 19 l-5 -7" />
-            <path d="M53 15.5 l-2.5 -8" />
-            <path d="M67 15.5 l2.5 -8" />
-            <path d="M74 19 l5 -7" />
-            <path d="M60 14 l0 -7" />
+          <path
+            d={`M ${cx - headRx + 1} 33 Q ${cx - headRx - 0.5} 15 ${cx} 15 Q ${cx + headRx + 0.5} 15 ${cx + headRx - 1} 33 Q ${cx + headRx * 0.5} 24 ${cx} 25.5 Q ${cx - headRx * 0.5} 24 ${cx - headRx + 1} 33 Z`}
+            fill="#4a3324"
+          />
+          <g stroke="#4a3324" strokeWidth="2.1" strokeLinecap="round" opacity={messyHair}>
+            <path d={`M ${cx - 15} 20 l -5.5 -7.5`} />
+            <path d={`M ${cx - 8} 16 l -2.5 -8.5`} />
+            <path d={`M ${cx + 8} 16 l 2.5 -8.5`} />
+            <path d={`M ${cx + 15} 20 l 5.5 -7.5`} />
+            <path d={`M ${cx} 15 l 0 -7.5`} />
           </g>
 
           {/* face */}
-          <path d="M59 37 q 1.6 3 0 5.2" stroke="rgba(0,0,0,0.22)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-          <line x1="47.5" y1={26 + browTilt} x2="54.5" y2={26 - browTilt} stroke="#2b2438" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="65.5" y1={26 - browTilt} x2="72.5" y2={26 + browTilt} stroke="#2b2438" strokeWidth="2.2" strokeLinecap="round" />
-          <ellipse cx="52.5" cy="38" rx="3.2" ry="1.8" fill="#6b5b73" opacity={underEye} />
-          <ellipse cx="67.5" cy="38" rx="3.2" ry="1.8" fill="#6b5b73" opacity={underEye} />
-          <circle cx="52.5" cy="34" r="2.1" fill="#2b2438" />
-          <circle cx="67.5" cy="34" r="2.1" fill="#2b2438" />
-          <ellipse cx="50.5" cy="40.5" rx="3.6" ry="2.1" fill="#ff9d8a" opacity={blush} />
-          <ellipse cx="69.5" cy="40.5" rx="3.6" ry="2.1" fill="#ff9d8a" opacity={blush} />
-          <path d={`M 51 45 Q 60 ${45 + mouthCurve} 69 45`} stroke="#2b2438" strokeWidth="2.3" fill="none" strokeLinecap="round" />
+          <path d={`M ${cx - 1} 39 q 1.8 3.2 0 5.6`} stroke="rgba(0,0,0,0.22)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <path
+            d={`M ${cx - 14.5} ${28 + browTilt} Q ${cx - 10} ${25.5 - browTilt * 0.6} ${cx - 5.5} ${28 - browTilt}`}
+            stroke="#2b2438"
+            strokeWidth="2.3"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d={`M ${cx + 5.5} ${28 - browTilt} Q ${cx + 10} ${25.5 - browTilt * 0.6} ${cx + 14.5} ${28 + browTilt}`}
+            stroke="#2b2438"
+            strokeWidth="2.3"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <ellipse cx={cx - 7.5} cy="40" rx="3.4" ry="1.9" fill="#6b5b73" opacity={underEye} />
+          <ellipse cx={cx + 7.5} cy="40" rx="3.4" ry="1.9" fill="#6b5b73" opacity={underEye} />
+          <ellipse cx={cx - 7.5} cy="36" rx="2.6" ry="2.9" fill="#fff" />
+          <ellipse cx={cx + 7.5} cy="36" rx="2.6" ry="2.9" fill="#fff" />
+          <circle cx={cx - 7.5} cy="36.4" r="1.9" fill="#2b2438" />
+          <circle cx={cx + 7.5} cy="36.4" r="1.9" fill="#2b2438" />
+          <circle cx={cx - 6.9} cy="35.8" r="0.6" fill="#fff" opacity={lerp(0, 0.9, f)} />
+          <circle cx={cx + 8.1} cy="35.8" r="0.6" fill="#fff" opacity={lerp(0, 0.9, f)} />
+          <ellipse cx={cx - 9.5} cy="42.5" rx="3.8" ry="2.2" fill="#ff9d8a" opacity={blush} />
+          <ellipse cx={cx + 9.5} cy="42.5" rx="3.8" ry="2.2" fill="#ff9d8a" opacity={blush} />
+          <path
+            d={`M ${cx - 9} 47 Q ${cx} ${47 + mouthCurve} ${cx + 9} 47`}
+            stroke="#2b2438"
+            strokeWidth="2.4"
+            fill="none"
+            strokeLinecap="round"
+          />
           <g fill="#3a2a20" opacity={stubble}>
             {stubbleDots.map(([x, y]) => (
-              <circle key={`${x}-${y}`} cx={x} cy={y} r="0.65" />
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="0.7" />
             ))}
           </g>
         </g>
 
-        {showSweat && <path d="M83 27 Q 87 34 83 39 Q 79 34 83 27 Z" fill="#8ecbff" opacity="0.85" />}
+        {showSweat && <path d={`M ${cx + 22} 29 Q ${cx + 26} 36 ${cx + 22} 41 Q ${cx + 18} 36 ${cx + 22} 29 Z`} fill="#8ecbff" opacity="0.85" />}
         {showSparkle && (
           <g fill="#ffd54a">
-            <path d="M22 24 L24 30 L30 32 L24 34 L22 40 L20 34 L14 32 L20 30 Z" />
-            <path d="M96 46 L97.3 49.5 L101 50.5 L97.3 51.5 L96 55 L94.7 51.5 L91 50.5 L94.7 49.5 Z" />
+            <path d={`M ${cx - 47} 25 L ${cx - 45} 31 L ${cx - 39} 33 L ${cx - 45} 35 L ${cx - 47} 41 L ${cx - 49} 35 L ${cx - 55} 33 L ${cx - 49} 31 Z`} />
+            <path d={`M ${cx + 25} 47 L ${cx + 26.3} 50.5 L ${cx + 30} 51.5 L ${cx + 26.3} 52.5 L ${cx + 25} 56 L ${cx + 23.7} 52.5 L ${cx + 20} 51.5 L ${cx + 23.7} 50.5 Z`} />
           </g>
         )}
       </svg>
