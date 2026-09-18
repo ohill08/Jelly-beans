@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CheckInForm from './components/CheckInForm';
 import RewardReveal from './components/RewardReveal';
 import JellyBeanJar from './components/JellyBeanJar';
@@ -7,6 +7,7 @@ import { loadEntries, upsertEntry } from './lib/storage';
 import { getPendingDates } from './lib/queue';
 import { scoreDay } from './lib/scoring';
 import { computeFitness } from './lib/avatar';
+import { computeWeeklyBeanColor, rgbString } from './lib/theme';
 import type { BeanColor, DayAnswers, DayEntry } from './lib/types';
 import './App.css';
 
@@ -42,6 +43,17 @@ function App() {
     () => computeFitness(view.mode === 'edit' ? entries.slice(0, -1) : entries),
     [entries, view.mode],
   );
+
+  // Tint the page background with a blend of the last 7 days' jelly beans.
+  useEffect(() => {
+    const color = computeWeeklyBeanColor(entries);
+    const root = document.documentElement.style;
+    if (color) {
+      root.setProperty('--week-tint', rgbString(color));
+    } else {
+      root.removeProperty('--week-tint');
+    }
+  }, [entries]);
 
   const commitAnswers = (date: string, answers: DayAnswers) => {
     const bean = scoreDay(answers);
@@ -112,6 +124,7 @@ function App() {
             Gold = ate healthily, no alcohol, exercised &amp; HRV above 65 · Green = ate healthily and no alcohol ·
             Red = didn't eat healthily and/or drank alcohol. Come back tomorrow for your next jelly bean.
           </p>
+          <p className="scoring-note">The page background blends your last 7 days of beans.</p>
         </>
       )}
     </div>

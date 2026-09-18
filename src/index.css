@@ -17,6 +17,10 @@
   --glass-edge: rgba(140, 175, 200, 0.6);
   --glass-highlight: rgba(255, 255, 255, 0.75);
 
+  /* Blend of the last 7 days' jelly beans, set from JS; falls back to the
+     plain background until there's history (or if color-mix is unsupported). */
+  --week-tint: var(--bg);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   font: 17px/150% var(--sans);
   color-scheme: light dark;
@@ -48,6 +52,9 @@
 
 body {
   margin: 0;
+  min-height: 100svh;
+  background: color-mix(in srgb, var(--week-tint) 38%, var(--bg));
+  transition: background 0.6s ease;
 }
 
 h1,
