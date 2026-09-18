@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { DayAnswers, TriAnswer } from '../lib/types';
 import { formatFriendly } from '../lib/dates';
+import { fitnessLabel } from '../lib/avatar';
+import AvatarCoach from './AvatarCoach';
 
 interface Props {
   date: string;
@@ -9,6 +11,7 @@ interface Props {
   onSubmit: (answers: DayAnswers) => void;
   initialAnswers?: DayAnswers;
   isEdit?: boolean;
+  fitness: number;
 }
 
 interface Question {
@@ -34,6 +37,7 @@ export default function CheckInForm({
   onSubmit,
   initialAnswers,
   isEdit,
+  fitness,
 }: Props) {
   const [draft, setDraft] = useState<Draft>(() =>
     initialAnswers
@@ -65,16 +69,20 @@ export default function CheckInForm({
 
   return (
     <div className="checkin-card">
-      <div className="checkin-header">
-        <span className="checkin-eyebrow">
-          {isEdit
-            ? 'Editing entry'
-            : queueTotal > 1
-              ? `Catching up · ${queuePosition} of ${queueTotal}`
-              : 'Daily check-in'}
-        </span>
-        <h2>{formatFriendly(date)}</h2>
-        <p className="checkin-sub">{isEdit ? 'Update your answers for this day.' : 'How did yesterday go?'}</p>
+      <div className="checkin-asker">
+        <AvatarCoach fitness={fitness} />
+        <div className="checkin-bubble">
+          <span className="checkin-eyebrow">
+            {isEdit
+              ? 'Editing entry'
+              : queueTotal > 1
+                ? `Catching up · ${queuePosition} of ${queueTotal}`
+                : 'Daily check-in'}
+          </span>
+          <h2>{formatFriendly(date)}</h2>
+          <p className="checkin-sub">{isEdit ? 'Update your answers for this day.' : 'How did yesterday go?'}</p>
+          <p className="checkin-coach-status">{fitnessLabel(fitness)}</p>
+        </div>
       </div>
 
       <div className="questions">

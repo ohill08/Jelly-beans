@@ -32,6 +32,52 @@
   text-align: left;
 }
 
+.checkin-asker {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.avatar-coach {
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.checkin-bubble {
+  position: relative;
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.checkin-bubble::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+
+.checkin-bubble h2 {
+  font-size: 19px;
+}
+
+.checkin-coach-status {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+
 .checkin-header {
   text-align: center;
   margin-bottom: 20px;

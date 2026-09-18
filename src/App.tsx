@@ -6,6 +6,7 @@ import StatsPanel from './components/StatsPanel';
 import { loadEntries, upsertEntry } from './lib/storage';
 import { getPendingDates } from './lib/queue';
 import { scoreDay } from './lib/scoring';
+import { computeFitness } from './lib/avatar';
 import type { BeanColor, DayAnswers, DayEntry } from './lib/types';
 import './App.css';
 
@@ -34,6 +35,13 @@ function App() {
   }, [editing, entries, pendingDates]);
 
   const [reveal, setReveal] = useState<{ date: string; bean: BeanColor } | null>(null);
+
+  // While editing the most recent entry, base the coach's look on the run-up to it,
+  // not the entry currently being changed.
+  const fitness = useMemo(
+    () => computeFitness(view.mode === 'edit' ? entries.slice(0, -1) : entries),
+    [entries, view.mode],
+  );
 
   const commitAnswers = (date: string, answers: DayAnswers) => {
     const bean = scoreDay(answers);
@@ -74,6 +82,7 @@ function App() {
           date={view.date}
           queuePosition={view.position}
           queueTotal={view.total}
+          fitness={fitness}
           onSubmit={(answers) => commitAnswers(view.date, answers)}
         />
       )}
@@ -84,6 +93,7 @@ function App() {
           queuePosition={1}
           queueTotal={1}
           isEdit
+          fitness={fitness}
           initialAnswers={view.entry.answers}
           onSubmit={(answers) => commitAnswers(view.date, answers)}
         />
