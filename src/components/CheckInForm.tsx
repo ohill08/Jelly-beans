@@ -25,6 +25,7 @@ const QUESTIONS: Question[] = [
   { key: 'ateHealthy', label: 'Did you eat healthily?', hint: 'Mostly whole foods, sensible portions.' },
   { key: 'drankAlcohol', label: 'Did you drink alcohol?', hint: 'Any alcoholic drinks at all.' },
   { key: 'exercised', label: 'Did you exercise?', hint: 'Any intentional movement or workout.' },
+  { key: 'steps10k', label: 'Did you do 10,000 steps?', hint: 'Required for green or gold, no matter what else you did.' },
   { key: 'hrv', label: 'Was your HRV above 65?', hint: "Don't track HRV? Choose N/A.", allowNA: true },
 ];
 
@@ -45,6 +46,7 @@ export default function CheckInForm({
           ateHealthy: initialAnswers.ateHealthy ? 'yes' : 'no',
           drankAlcohol: initialAnswers.drankAlcohol ? 'yes' : 'no',
           exercised: initialAnswers.exercised ? 'yes' : 'no',
+          steps10k: initialAnswers.steps10k ? 'yes' : 'no',
           hrv: initialAnswers.hrv,
         }
       : {},
@@ -62,6 +64,7 @@ export default function CheckInForm({
       ateHealthy: draft.ateHealthy === 'yes',
       drankAlcohol: draft.drankAlcohol === 'yes',
       exercised: draft.exercised === 'yes',
+      steps10k: draft.steps10k === 'yes',
       hrv: draft.hrv as TriAnswer,
     };
     onSubmit(answers);

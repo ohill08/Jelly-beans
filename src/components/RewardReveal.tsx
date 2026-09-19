@@ -1,9 +1,12 @@
 import type { BeanColor } from '../lib/types';
 
 const COPY: Record<BeanColor, { title: string; body: string }> = {
-  gold: { title: 'Gold jelly bean!', body: 'Ate healthily, skipped alcohol, exercised, and HRV above 65 — a perfect day.' },
-  green: { title: 'Green jelly bean', body: 'You ate healthily and skipped alcohol. Solid work.' },
-  red: { title: 'Red jelly bean', body: "Eating and alcohol didn't go to plan today. Tomorrow's a fresh start." },
+  gold: {
+    title: 'Gold jelly bean!',
+    body: 'Ate healthily, skipped alcohol, hit 10,000 steps, exercised, and HRV above 65 — a perfect day.',
+  },
+  green: { title: 'Green jelly bean', body: 'You ate healthily, skipped alcohol, and hit 10,000 steps. Solid work.' },
+  red: { title: 'Red jelly bean', body: "Diet, alcohol, or steps didn't go to plan today. Tomorrow's a fresh start." },
 };
 
 interface Props {

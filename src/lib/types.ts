@@ -6,6 +6,7 @@ export interface DayAnswers {
   ateHealthy: boolean;
   drankAlcohol: boolean;
   exercised: boolean;
+  steps10k: boolean;
   hrv: TriAnswer; // 'na' when the user doesn't track HRV
 }
 

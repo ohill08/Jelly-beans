@@ -121,8 +121,8 @@ function App() {
             </button>
           )}
           <p className="scoring-note">
-            Gold = ate healthily, no alcohol, exercised &amp; HRV above 65 · Green = ate healthily and no alcohol ·
-            Red = didn't eat healthily and/or drank alcohol. Come back tomorrow for your next jelly bean.
+            Green needs ate healthily, no alcohol &amp; 10,000 steps — no exceptions. Gold adds exercise &amp; HRV
+            above 65 on top. Anything less is red. Come back tomorrow for your next jelly bean.
           </p>
           <p className="scoring-note">The page background blends your last 7 days of beans.</p>
         </>

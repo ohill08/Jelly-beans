@@ -3,14 +3,15 @@ import type { BeanColor, DayAnswers } from './types';
 /**
  * Scores a day's answers into a jelly bean color.
  *
- *  - Gold:  ate healthily, no alcohol, exercised, and HRV above 65
- *  - Green: ate healthily and no alcohol (regardless of exercise/HRV)
- *  - Red:   didn't eat healthily and/or drank alcohol
+ *  - Gold:  ate healthily, no alcohol, 10,000+ steps, exercised, and HRV above 65
+ *  - Green: ate healthily, no alcohol and 10,000+ steps — a hard requirement,
+ *           regardless of how the rest of the day went
+ *  - Red:   any of the above green requirements weren't met
  */
 export function scoreDay(answers: DayAnswers): BeanColor {
-  const atePlusSober = answers.ateHealthy && !answers.drankAlcohol;
+  const greenBar = answers.ateHealthy && !answers.drankAlcohol && answers.steps10k;
 
-  if (atePlusSober && answers.exercised && answers.hrv === 'yes') return 'gold';
-  if (atePlusSober) return 'green';
+  if (greenBar && answers.exercised && answers.hrv === 'yes') return 'gold';
+  if (greenBar) return 'green';
   return 'red';
 }
