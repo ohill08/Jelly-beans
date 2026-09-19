@@ -30,6 +30,7 @@ export default function StatsPanel({ entries }: Props) {
         <span className="count-pill count-gold">{stats.counts.gold} gold</span>
         <span className="count-pill count-green">{stats.counts.green} green</span>
         <span className="count-pill count-red">{stats.counts.red} red</span>
+        <span className="count-pill count-white">{stats.counts.white} sick</span>
       </div>
 
       {recent.length > 0 && (

@@ -6,16 +6,20 @@ const BEAN_RGB: Record<BeanColor, [number, number, number]> = {
   gold: [244, 180, 0],
   green: [76, 175, 107],
   red: [229, 72, 77],
+  white: [255, 255, 255],
 };
 
 /**
  * Averages the RGB of the last week's beans, equal weight per day — an
  * all-green week comes out solid green, a mixed week lands somewhere
- * between. Returns null when there's no history yet, so callers can fall
- * back to the app's neutral default background.
+ * between. Sick days are excluded entirely (not just counted as neutral)
+ * so they don't use up a slot in the week or shift the blend at all.
+ * Returns null when there's no (non-sick) history yet, so callers can
+ * fall back to the app's neutral default background.
  */
 export function computeWeeklyBeanColor(entries: DayEntry[]): [number, number, number] | null {
-  const recent = entries.slice(-RECENT_WINDOW);
+  const colored = entries.filter((e) => e.bean !== 'white');
+  const recent = colored.slice(-RECENT_WINDOW);
   if (recent.length === 0) return null;
 
   const sum = recent.reduce(

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import CheckInForm from './components/CheckInForm';
+import ReadyScreen from './components/ReadyScreen';
 import RewardReveal from './components/RewardReveal';
 import JellyBeanJar from './components/JellyBeanJar';
 import StatsPanel from './components/StatsPanel';
@@ -12,8 +13,8 @@ import type { BeanColor, DayAnswers, DayEntry } from './lib/types';
 import './App.css';
 
 type ViewState =
+  | { mode: 'ready'; pendingCount: number }
   | { mode: 'checkin'; date: string; position: number; total: number }
-  | { mode: 'reveal'; date: string; bean: BeanColor; nextIsQueue: boolean }
   | { mode: 'jar' }
   | { mode: 'edit'; date: string; entry: DayEntry };
 
@@ -21,6 +22,9 @@ function App() {
   const [entries, setEntries] = useState<DayEntry[]>(() => loadEntries());
   const [editing, setEditing] = useState(false);
   const [justRevealed, setJustRevealed] = useState<string | null>(null);
+  // Gates the check-in queue behind the avatar's "ready to log?" screen —
+  // asked once per batch, not once per catch-up day.
+  const [readyToLog, setReadyToLog] = useState(false);
 
   const pendingDates = useMemo(() => getPendingDates(entries), [entries]);
 
@@ -30,10 +34,11 @@ function App() {
       if (last) return { mode: 'edit', date: last.date, entry: last };
     }
     if (pendingDates.length > 0) {
+      if (!readyToLog) return { mode: 'ready', pendingCount: pendingDates.length };
       return { mode: 'checkin', date: pendingDates[0], position: 1, total: pendingDates.length };
     }
     return { mode: 'jar' };
-  }, [editing, entries, pendingDates]);
+  }, [editing, entries, pendingDates, readyToLog]);
 
   const [reveal, setReveal] = useState<{ date: string; bean: BeanColor } | null>(null);
 
@@ -67,6 +72,8 @@ function App() {
   const handleContinueFromReveal = () => {
     setJustRevealed(reveal?.date ?? null);
     setReveal(null);
+    // Batch fully logged — re-arm the gate so a future pending day asks again.
+    if (pendingDates.length === 0) setReadyToLog(false);
   };
 
   if (reveal) {
@@ -78,6 +85,16 @@ function App() {
           continueLabel={morePending ? 'Next day' : 'See my jar'}
           onContinue={handleContinueFromReveal}
         />
+      </div>
+    );
+  }
+
+  // The very first thing the user sees for a pending check-in is the coach
+  // avatar alone, asking if they're ready — no header, no jar, nothing else.
+  if (view.mode === 'ready') {
+    return (
+      <div className="app-shell">
+        <ReadyScreen fitness={fitness} pendingCount={view.pendingCount} onReady={() => setReadyToLog(true)} />
       </div>
     );
   }
@@ -122,7 +139,8 @@ function App() {
           )}
           <p className="scoring-note">
             Green needs ate healthily, no alcohol &amp; 10,000 steps — no exceptions. Gold adds exercise &amp; HRV
-            above 65 on top. Anything less is red. Come back tomorrow for your next jelly bean.
+            above 65 on top. Anything less is red — unless you were sick, which is always white and doesn't
+            affect your coach, streak, or background. Come back tomorrow for your next jelly bean.
           </p>
           <p className="scoring-note">The page background blends your last 7 days of beans.</p>
         </>

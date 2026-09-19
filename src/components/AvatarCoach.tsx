@@ -2,6 +2,7 @@ import { fitnessLabel } from '../lib/avatar';
 
 interface Props {
   fitness: number; // 0..1
+  size?: 'sm' | 'lg';
 }
 
 interface Pt {
@@ -105,7 +106,7 @@ function buildTorso(cx: number, topCenter: Pt, levels: { y: number; half: number
  * heavier through the middle, hunched, pale and unkempt; high scores read
  * as lean, upright, groomed and energised.
  */
-export default function AvatarCoach({ fitness }: Props) {
+export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
   const f = Math.max(0, Math.min(1, fitness));
   const cx = 70;
 
@@ -204,8 +205,14 @@ export default function AvatarCoach({ fitness }: Props) {
   ] as const;
 
   return (
-    <div className="avatar-coach">
-      <svg viewBox="0 0 140 172" width="92" height="113" role="img" aria-label={fitnessLabel(f)}>
+    <div className={`avatar-coach${size === 'lg' ? ' avatar-coach-lg' : ''}`}>
+      <svg
+        viewBox="0 0 140 172"
+        width={size === 'lg' ? 172 : 92}
+        height={size === 'lg' ? 211 : 113}
+        role="img"
+        aria-label={fitnessLabel(f)}
+      >
         <defs>
           <radialGradient id="coachGlow" cx="50%" cy="40%" r="55%">
             <stop offset="0%" stopColor="#ffd54a" stopOpacity={glow} />

@@ -21,7 +21,13 @@ interface Question {
   allowNA?: boolean;
 }
 
-const QUESTIONS: Question[] = [
+const SICK_QUESTION: Question = {
+  key: 'sick',
+  label: 'Were you sick?',
+  hint: 'A sick day always gets a white bean, whatever else happened.',
+};
+
+const REST_OF_QUESTIONS: Question[] = [
   { key: 'ateHealthy', label: 'Did you eat healthily?', hint: 'Mostly whole foods, sensible portions.' },
   { key: 'drankAlcohol', label: 'Did you drink alcohol?', hint: 'Any alcoholic drinks at all.' },
   { key: 'exercised', label: 'Did you exercise?', hint: 'Any intentional movement or workout.' },
@@ -43,6 +49,7 @@ export default function CheckInForm({
   const [draft, setDraft] = useState<Draft>(() =>
     initialAnswers
       ? {
+          sick: initialAnswers.sick ? 'yes' : 'no',
           ateHealthy: initialAnswers.ateHealthy ? 'yes' : 'no',
           drankAlcohol: initialAnswers.drankAlcohol ? 'yes' : 'no',
           exercised: initialAnswers.exercised ? 'yes' : 'no',
@@ -56,17 +63,22 @@ export default function CheckInForm({
     setDraft((d) => ({ ...d, [key]: value }));
   };
 
-  const allAnswered = QUESTIONS.every((q) => draft[q.key] !== undefined);
+  const isSick = draft.sick === 'yes';
+  const visibleQuestions = isSick ? [SICK_QUESTION] : [SICK_QUESTION, ...REST_OF_QUESTIONS];
+  const allAnswered = visibleQuestions.every((q) => draft[q.key] !== undefined);
 
   const handleSubmit = () => {
     if (!allAnswered) return;
-    const answers: DayAnswers = {
-      ateHealthy: draft.ateHealthy === 'yes',
-      drankAlcohol: draft.drankAlcohol === 'yes',
-      exercised: draft.exercised === 'yes',
-      steps10k: draft.steps10k === 'yes',
-      hrv: draft.hrv as TriAnswer,
-    };
+    const answers: DayAnswers = isSick
+      ? { sick: true, ateHealthy: false, drankAlcohol: false, exercised: false, steps10k: false, hrv: 'na' }
+      : {
+          sick: false,
+          ateHealthy: draft.ateHealthy === 'yes',
+          drankAlcohol: draft.drankAlcohol === 'yes',
+          exercised: draft.exercised === 'yes',
+          steps10k: draft.steps10k === 'yes',
+          hrv: draft.hrv as TriAnswer,
+        };
     onSubmit(answers);
   };
 
@@ -89,7 +101,7 @@ export default function CheckInForm({
       </div>
 
       <div className="questions">
-        {QUESTIONS.map((q) => (
+        {visibleQuestions.map((q) => (
           <div className="question" key={q.key}>
             <div className="question-text">
               <span className="question-label">{q.label}</span>

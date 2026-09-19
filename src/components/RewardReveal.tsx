@@ -7,6 +7,10 @@ const COPY: Record<BeanColor, { title: string; body: string }> = {
   },
   green: { title: 'Green jelly bean', body: 'You ate healthily, skipped alcohol, and hit 10,000 steps. Solid work.' },
   red: { title: 'Red jelly bean', body: "Diet, alcohol, or steps didn't go to plan today. Tomorrow's a fresh start." },
+  white: {
+    title: 'White jelly bean',
+    body: "A sick day. It's set aside — no impact on your streak, your coach, or the jar's colour.",
+  },
 };
 
 interface Props {

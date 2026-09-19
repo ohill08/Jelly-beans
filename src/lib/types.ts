@@ -1,8 +1,9 @@
-export type BeanColor = 'gold' | 'green' | 'red';
+export type BeanColor = 'gold' | 'green' | 'red' | 'white';
 
 export type TriAnswer = 'yes' | 'no' | 'na';
 
 export interface DayAnswers {
+  sick: boolean;
   ateHealthy: boolean;
   drankAlcohol: boolean;
   exercised: boolean;
