@@ -8,6 +8,7 @@ import { loadEntries, upsertEntry } from './lib/storage';
 import { getPendingDates } from './lib/queue';
 import { scoreDay } from './lib/scoring';
 import { computeFitness } from './lib/avatar';
+import { computeGarden } from './lib/garden';
 import { computeWeeklyBeanColor, rgbString } from './lib/theme';
 import type { BeanColor, DayAnswers, DayEntry } from './lib/types';
 import './App.css';
@@ -46,6 +47,10 @@ function App() {
   // not the entry currently being changed.
   const fitness = useMemo(
     () => computeFitness(view.mode === 'edit' ? entries.slice(0, -1) : entries),
+    [entries, view.mode],
+  );
+  const garden = useMemo(
+    () => computeGarden(view.mode === 'edit' ? entries.slice(0, -1) : entries),
     [entries, view.mode],
   );
 
@@ -94,7 +99,7 @@ function App() {
   if (view.mode === 'ready') {
     return (
       <div className="app-shell">
-        <ReadyScreen fitness={fitness} pendingCount={view.pendingCount} onReady={() => setReadyToLog(true)} />
+        <ReadyScreen fitness={fitness} garden={garden} pendingCount={view.pendingCount} onReady={() => setReadyToLog(true)} />
       </div>
     );
   }
