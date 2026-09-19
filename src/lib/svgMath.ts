@@ -31,3 +31,18 @@ export function project(base: Pt, length: number, angleDeg: number): Pt {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: base.x + length * Math.sin(rad), y: base.y - length * Math.cos(rad) };
 }
+
+/**
+ * A small deterministic hash for turning a stable string/number key into
+ * repeatable pseudo-randomness. Finishes with an avalanche mix (so keys
+ * that differ by only one character, like "slot-0" vs "slot-1", still land
+ * far apart) rather than returning the raw polynomial hash.
+ */
+export function hashSeed(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = h ^ (h >>> 16);
+  return h >>> 0;
+}
