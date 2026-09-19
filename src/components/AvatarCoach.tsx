@@ -129,7 +129,6 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
   const browTilt = lerp(6, -4, f); // positive = worried, negative = confident
   const glow = lerp(0, 0.5, f);
   const underEye = lerp(0.6, 0, f);
-  const stubble = lerp(0.55, 0, f);
   const blush = lerp(0, 0.4, Math.max(0, f - 0.5) * 2);
   const wrinkles = lerp(0.6, 0, f);
   const messyHair = lerp(1, 0, Math.min(1, f / 0.6));
@@ -199,11 +198,6 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
 
   const showSweat = f < 0.32;
   const showSparkle = f >= 0.75;
-
-  const stubbleDots = [
-    [cx - 24, 44], [cx - 21.5, 46.5], [cx - 18, 48.5], [cx - 14, 50], [cx - 10, 50.8],
-    [cx + 10, 50.8], [cx + 14, 50], [cx + 18, 48.5], [cx + 21.5, 46.5], [cx + 24, 44],
-  ] as const;
 
   return (
     <div className={`avatar-coach${size === 'lg' ? ' avatar-coach-lg' : ''}`}>
@@ -301,35 +295,6 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
             <path d={`M ${cx} 15 l 0 -7.5`} />
           </g>
 
-          {/* sideburns + a light beard and moustache — always present, not tied to fitness */}
-          <path
-            d={`M ${cx - headRx + 2.5} 32 Q ${cx - headRx * 0.82} 39 ${cx - headRx * 0.72} 43.5`}
-            stroke={hairColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.85"
-          />
-          <path
-            d={`M ${cx + headRx - 2.5} 32 Q ${cx + headRx * 0.82} 39 ${cx + headRx * 0.72} 43.5`}
-            stroke={hairColor}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.85"
-          />
-          <path
-            d={`M ${cx - headRx * 0.72} 42 Q ${cx - headRx * 0.55} 53 ${cx} 54.5 Q ${cx + headRx * 0.55} 53 ${cx + headRx * 0.72} 42
-                Q ${cx + headRx * 0.42} 50.5 ${cx} 52 Q ${cx - headRx * 0.42} 50.5 ${cx - headRx * 0.72} 42 Z`}
-            fill={hairColor}
-            opacity="0.3"
-          />
-          <path
-            d={`M ${cx - 7} 44 Q ${cx} 42 ${cx + 7} 44 Q ${cx} 45.1 ${cx - 7} 44 Z`}
-            fill={hairColor}
-            opacity="0.45"
-          />
-
           {/* face */}
           <path d={`M ${cx - 1} 39 q 1.8 3.2 0 5.6`} stroke="rgba(0,0,0,0.22)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
           <path
@@ -363,11 +328,6 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
             fill="none"
             strokeLinecap="round"
           />
-          <g fill="#3a2a20" opacity={stubble}>
-            {stubbleDots.map(([x, y]) => (
-              <circle key={`${x}-${y}`} cx={x} cy={y} r="0.7" />
-            ))}
-          </g>
           {showSweat && (
             <path d={`M ${cx + 24} 29 Q ${cx + 28} 36 ${cx + 24} 41 Q ${cx + 20} 36 ${cx + 24} 29 Z`} fill="#8ecbff" opacity="0.85" />
           )}
