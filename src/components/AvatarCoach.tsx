@@ -21,9 +21,19 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
 
   // Torso: squat and wide when low, tall and upright when high.
   const bodyRy = lerp(24, 34, f);
-  const bodyRx = lerp(34, 27, f);
   const bodyCy = bodyBottomY - bodyRy;
   const lean = lerp(12, 0, f);
+
+  // The torso is a chest ellipse over a belly ellipse rather than one
+  // uniform shape, so the silhouette itself changes with fitness: a round,
+  // belly-led shape when low, a broader-chested, narrow-waisted one when
+  // high — read as "fatter" vs. "slimmer and more muscular".
+  const chestRx = lerp(25, 35, f);
+  const chestRy = bodyRy * 0.62;
+  const chestCy = bodyCy - bodyRy * 0.32;
+  const bellyRx = lerp(37, 23, f);
+  const bellyRy = bodyRy * 0.68;
+  const bellyCy = bodyCy + bodyRy * 0.22;
 
   const headR = lerp(21, 19, f);
   const headCy = bodyCy - bodyRy - headR + 5; // sits slightly into the shoulders, no neck needed
@@ -40,6 +50,8 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
   const eyeRy = lerp(1.2, 3.6, f); // sleepy slit -> wide open
   const eyelidOpacity = lerp(0.75, 0, f);
   const catchlightOpacity = lerp(0, 0.9, f);
+  const bagOpacity = lerp(0.6, 0, f); // puffy under-eye bags, fade out as fitness climbs
+  const bagCy = eyeCy + eyeRy + 2.6;
 
   const mouthCy = headCy + headR * 0.4;
   const mouthHalfW = lerp(6, 9, f);
@@ -57,16 +69,18 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
   const tuftBallR = lerp(2.2, 3.4, f);
 
   // Arms: hang limp at the sides when low, thrown up in a cheer when high.
-  const leftArmBase = { x: cx - bodyRx, y: bodyCy };
-  const rightArmBase = { x: cx + bodyRx, y: bodyCy };
+  // Width also grows with fitness — thin/weak at low, toned/muscular at high.
+  const leftArmBase = { x: cx - chestRx, y: chestCy };
+  const rightArmBase = { x: cx + chestRx, y: chestCy };
   const leftArmAngle = -lerp(160, 20, f);
   const rightArmAngle = lerp(160, 20, f);
   const leftHand = project(leftArmBase, 18, leftArmAngle);
   const rightHand = project(rightArmBase, 18, rightArmAngle);
+  const armWidth = lerp(7.5, 10.5, f);
 
   // Legs: stand short and squat when low, tall and planted when high.
   const legBottomY = lerp(186, 194, f);
-  const legGapX = bodyRx * 0.42;
+  const legGapX = bellyRx * 0.42;
   const leftLegX = cx - legGapX;
   const rightLegX = cx + legGapX;
   const legWidth = lerp(15, 11, f);
@@ -111,14 +125,16 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
           <ellipse cx={rightLegX} cy={legBottomY + 3} rx="9" ry="4.5" fill="#241f30" />
 
           {/* arms, behind the torso */}
-          <line x1={leftArmBase.x} y1={leftArmBase.y} x2={leftHand.x} y2={leftHand.y} stroke={armColor} strokeWidth="9" strokeLinecap="round" />
+          <line x1={leftArmBase.x} y1={leftArmBase.y} x2={leftHand.x} y2={leftHand.y} stroke={armColor} strokeWidth={armWidth} strokeLinecap="round" />
           <circle cx={leftHand.x} cy={leftHand.y} r="5" fill={armColor} />
-          <line x1={rightArmBase.x} y1={rightArmBase.y} x2={rightHand.x} y2={rightHand.y} stroke={armColor} strokeWidth="9" strokeLinecap="round" />
+          <line x1={rightArmBase.x} y1={rightArmBase.y} x2={rightHand.x} y2={rightHand.y} stroke={armColor} strokeWidth={armWidth} strokeLinecap="round" />
           <circle cx={rightHand.x} cy={rightHand.y} r="5" fill={armColor} />
 
-          {/* torso */}
-          <ellipse cx={cx} cy={bodyCy} rx={bodyRx} ry={bodyRy} fill={bodyColor} />
-          <ellipse cx={cx} cy={bodyCy} rx={bodyRx} ry={bodyRy} fill="url(#coachShade)" />
+          {/* torso: belly below chest, their relative size is what shifts the silhouette */}
+          <ellipse cx={cx} cy={bellyCy} rx={bellyRx} ry={bellyRy} fill={bodyColor} />
+          <ellipse cx={cx} cy={chestCy} rx={chestRx} ry={chestRy} fill={bodyColor} />
+          <ellipse cx={cx} cy={bellyCy} rx={bellyRx} ry={bellyRy} fill="url(#coachShade)" />
+          <ellipse cx={cx} cy={chestCy} rx={chestRx} ry={chestRy} fill="url(#coachShade)" />
 
           {/* head */}
           <circle cx={cx} cy={headCy} r={headR} fill={bodyColor} />
@@ -149,6 +165,8 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
           <ellipse cx={eyeRightCx} cy={eyeCy} rx="3.2" ry={eyeRy} fill="#2b2438" />
           <circle cx={eyeLeftCx - 0.9} cy={eyeCy - eyeRy * 0.4} r="0.8" fill="#fff" opacity={catchlightOpacity} />
           <circle cx={eyeRightCx - 0.9} cy={eyeCy - eyeRy * 0.4} r="0.8" fill="#fff" opacity={catchlightOpacity} />
+          <ellipse cx={eyeLeftCx} cy={bagCy} rx="3.4" ry="1.5" fill="#584a6b" opacity={bagOpacity} />
+          <ellipse cx={eyeRightCx} cy={bagCy} rx="3.4" ry="1.5" fill="#584a6b" opacity={bagOpacity} />
 
           <ellipse cx={cx - cheekOffset} cy={mouthCy - 3} rx="4.4" ry="2.6" fill="#ff9d8a" opacity={blush} />
           <ellipse cx={cx + cheekOffset} cy={mouthCy - 3} rx="4.4" ry="2.6" fill="#ff9d8a" opacity={blush} />
