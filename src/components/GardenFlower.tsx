@@ -15,15 +15,14 @@ const BLOOM = [219, 84, 150] as const;
 const LEAF_DRIED = [118, 104, 76] as const;
 const LEAF_FRESH = [76, 175, 107] as const;
 
-/** A single potted flower: how tall/bloomed it is (`stage`) is independent of how vigorous it currently looks (`health`), so an established flower can still droop when recent habits slip, and a new sprout can still look lively. */
+/** A single wildflower growing straight out of the ground: how tall/bloomed it is (`stage`) is independent of how vigorous it currently looks (`health`), so an established flower can still droop when recent habits slip, and a new sprout can still look lively. */
 export default function GardenFlower({ stage, health, size = 1 }: Props) {
   const s = clamp01(stage);
   const h = clamp01(health);
   const cx = 20;
 
-  const potTopY = 42;
-  const potBottomY = 56;
-  const stemBaseY = potTopY - 1;
+  const groundY = 54;
+  const stemBaseY = groundY - 2;
 
   const stemH = lerp(3, 30, Math.max(s, 0.08));
   const droopFactor = Math.min(1, s / 0.3);
@@ -42,9 +41,9 @@ export default function GardenFlower({ stage, health, size = 1 }: Props) {
 
   return (
     <svg viewBox="0 0 40 60" width={40 * size} height={60 * size} aria-hidden="true">
-      <ellipse cx={cx} cy={potTopY} rx="9" ry="2.2" fill="#4a3324" />
-      <path d={`M ${cx - 11} ${potTopY} L ${cx + 11} ${potTopY} L ${cx + 7} ${potBottomY} L ${cx - 7} ${potBottomY} Z`} fill="#c97b4a" />
-      <rect x={cx - 12} y={potTopY - 3} width="24" height="4" rx="1.5" fill="#b3693e" />
+      <ellipse cx={cx} cy={groundY} rx="8" ry="2.4" fill="#5a3d26" opacity="0.85" />
+      <path d={`M ${cx - 6} ${groundY - 1} Q ${cx - 6} ${groundY - 5} ${cx - 4} ${groundY - 2}`} stroke={leafColor} strokeWidth="1.4" fill="none" opacity={leafOpacity * 0.7} />
+      <path d={`M ${cx + 6} ${groundY - 1} Q ${cx + 6} ${groundY - 5} ${cx + 4} ${groundY - 2}`} stroke={leafColor} strokeWidth="1.4" fill="none" opacity={leafOpacity * 0.7} />
 
       <line x1={cx} y1={stemBaseY} x2={stemTop.x} y2={stemTop.y} stroke={leafColor} strokeWidth="2.4" strokeLinecap="round" />
 
