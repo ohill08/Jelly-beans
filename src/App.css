@@ -95,6 +95,13 @@
   letter-spacing: 0.04em;
 }
 
+.weight-goal {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
 .garden-bed {
   margin-top: 2px;
   width: 100%;
@@ -273,6 +280,45 @@
   font-size: 12.5px;
   color: var(--text);
   opacity: 0.8;
+}
+
+.optional-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  opacity: 0.6;
+}
+
+.weight-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weight-input {
+  flex: 1;
+  max-width: 140px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.weight-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.weight-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.75;
 }
 
 .question-options {

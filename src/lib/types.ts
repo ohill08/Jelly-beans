@@ -18,4 +18,10 @@ export interface DayEntry {
   bean: BeanColor;
   /** ISO timestamp of when the entry was recorded. */
   recordedAt: string;
+  /**
+   * Optional weight in kilograms, logged alongside the day's answers.
+   * Deliberately kept off `DayAnswers` and out of `scoreDay` — it never
+   * has any bearing on the jelly bean.
+   */
+  weightKg?: number;
 }

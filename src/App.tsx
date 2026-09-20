@@ -54,6 +54,14 @@ function App() {
     [entries, view.mode],
   );
 
+  // Most recently logged weight, if the user has ever bothered to log one.
+  const latestWeightKg = useMemo(() => {
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].weightKg !== undefined) return entries[i].weightKg;
+    }
+    return undefined;
+  }, [entries]);
+
   // Tint the page background with a blend of the last 7 days' jelly beans.
   useEffect(() => {
     const color = computeWeeklyBeanColor(entries);
@@ -65,9 +73,9 @@ function App() {
     }
   }, [entries]);
 
-  const commitAnswers = (date: string, answers: DayAnswers) => {
+  const commitAnswers = (date: string, answers: DayAnswers, weightKg?: number) => {
     const bean = scoreDay(answers);
-    const entry: DayEntry = { date, answers, bean, recordedAt: new Date().toISOString() };
+    const entry: DayEntry = { date, answers, bean, recordedAt: new Date().toISOString(), weightKg };
     const next = upsertEntry(entries, entry);
     setEntries(next);
     setReveal({ date, bean });
@@ -99,7 +107,13 @@ function App() {
   if (view.mode === 'ready') {
     return (
       <div className="app-shell">
-        <ReadyScreen fitness={fitness} garden={garden} pendingCount={view.pendingCount} onReady={() => setReadyToLog(true)} />
+        <ReadyScreen
+          fitness={fitness}
+          garden={garden}
+          pendingCount={view.pendingCount}
+          latestWeightKg={latestWeightKg}
+          onReady={() => setReadyToLog(true)}
+        />
       </div>
     );
   }
@@ -117,7 +131,7 @@ function App() {
           queuePosition={view.position}
           queueTotal={view.total}
           fitness={fitness}
-          onSubmit={(answers) => commitAnswers(view.date, answers)}
+          onSubmit={(answers, weightKg) => commitAnswers(view.date, answers, weightKg)}
         />
       )}
 
@@ -129,7 +143,8 @@ function App() {
           isEdit
           fitness={fitness}
           initialAnswers={view.entry.answers}
-          onSubmit={(answers) => commitAnswers(view.date, answers)}
+          initialWeightKg={view.entry.weightKg}
+          onSubmit={(answers, weightKg) => commitAnswers(view.date, answers, weightKg)}
         />
       )}
 

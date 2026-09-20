@@ -5,16 +5,20 @@ import { daysUntil } from '../lib/dates';
 import type { GardenState } from '../lib/garden';
 
 const WEDDING_DATE = '2027-12-11';
+const TARGET_WEIGHT_KG = 79;
 
 interface Props {
   fitness: number;
   garden: GardenState;
   pendingCount: number;
+  latestWeightKg?: number;
   onReady: () => void;
 }
 
-export default function ReadyScreen({ fitness, garden, pendingCount, onReady }: Props) {
+export default function ReadyScreen({ fitness, garden, pendingCount, latestWeightKg, onReady }: Props) {
   const daysToWedding = daysUntil(WEDDING_DATE);
+  // Rounded to 1dp to avoid floating point noise (e.g. 82.3 - 79 = 3.3000000000000007).
+  const kgToGoal = latestWeightKg !== undefined ? Math.round((latestWeightKg - TARGET_WEIGHT_KG) * 10) / 10 : undefined;
 
   return (
     <div className="ready-screen">
@@ -43,6 +47,16 @@ export default function ReadyScreen({ fitness, garden, pendingCount, onReady }: 
           <span className="wedding-countdown-label">It's the wedding day! 💍</span>
         ) : (
           <span className="wedding-countdown-label">Married!</span>
+        )}
+
+        {kgToGoal !== undefined && (
+          <p className="weight-goal">
+            {kgToGoal > 0
+              ? `${kgToGoal}kg to reach your ${TARGET_WEIGHT_KG}kg goal`
+              : kgToGoal < 0
+                ? `${Math.abs(kgToGoal)}kg under your ${TARGET_WEIGHT_KG}kg goal 🎉`
+                : `At your ${TARGET_WEIGHT_KG}kg goal 🎉`}
+          </p>
         )}
       </div>
     </div>

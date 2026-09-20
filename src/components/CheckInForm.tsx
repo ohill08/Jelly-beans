@@ -8,8 +8,9 @@ interface Props {
   date: string;
   queuePosition: number;
   queueTotal: number;
-  onSubmit: (answers: DayAnswers) => void;
+  onSubmit: (answers: DayAnswers, weightKg?: number) => void;
   initialAnswers?: DayAnswers;
+  initialWeightKg?: number;
   isEdit?: boolean;
   fitness: number;
 }
@@ -43,6 +44,7 @@ export default function CheckInForm({
   queueTotal,
   onSubmit,
   initialAnswers,
+  initialWeightKg,
   isEdit,
   fitness,
 }: Props) {
@@ -58,6 +60,7 @@ export default function CheckInForm({
         }
       : {},
   );
+  const [weightInput, setWeightInput] = useState(initialWeightKg !== undefined ? String(initialWeightKg) : '');
 
   const setAnswer = (key: keyof DayAnswers, value: TriAnswer) => {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -79,7 +82,9 @@ export default function CheckInForm({
           steps10k: draft.steps10k === 'yes',
           hrv: draft.hrv as TriAnswer,
         };
-    onSubmit(answers);
+    const parsedWeight = parseFloat(weightInput);
+    const weightKg = weightInput.trim() !== '' && Number.isFinite(parsedWeight) && parsedWeight > 0 ? parsedWeight : undefined;
+    onSubmit(answers, weightKg);
   };
 
   return (
@@ -134,6 +139,28 @@ export default function CheckInForm({
             </div>
           </div>
         ))}
+        <div className="question optional-question">
+          <div className="question-text">
+            <span className="question-label">
+              What's your weight? <span className="optional-tag">Optional</span>
+            </span>
+            <span className="question-hint">In kilograms. Skip it if you'd rather not log it — it never affects your jelly bean.</span>
+          </div>
+          <div className="weight-input-row">
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min="0"
+              placeholder="e.g. 82.5"
+              value={weightInput}
+              onChange={(e) => setWeightInput(e.target.value)}
+              className="weight-input"
+              aria-label="Weight in kilograms"
+            />
+            <span className="weight-unit">kg</span>
+          </div>
+        </div>
       </div>
 
       <button className="submit-btn" disabled={!allAnswered} onClick={handleSubmit}>
