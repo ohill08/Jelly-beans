@@ -46,6 +46,46 @@
   margin-bottom: 4px;
 }
 
+.avatar-speech-bubble {
+  position: relative;
+  max-width: 230px;
+  margin-bottom: 4px;
+  padding: 10px 14px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--text-h);
+  box-shadow: var(--shadow);
+}
+
+.avatar-speech-bubble::before,
+.avatar-speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+}
+
+.avatar-speech-bubble::before {
+  bottom: -9px;
+  margin-left: -9px;
+  border-top: 9px solid var(--border);
+}
+
+.avatar-speech-bubble::after {
+  bottom: -7px;
+  margin-left: -7.5px;
+  border-left-width: 7.5px;
+  border-right-width: 7.5px;
+  border-top: 7.5px solid var(--card-bg);
+}
+
 .ready-status {
   font-size: 12.5px;
   font-weight: 600;

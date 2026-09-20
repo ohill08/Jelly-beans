@@ -1,7 +1,8 @@
 import AvatarCoach from './AvatarCoach';
 import GardenBed from './GardenBed';
 import { fitnessLabel } from '../lib/avatar';
-import { daysUntil } from '../lib/dates';
+import { daysUntil, todayISO } from '../lib/dates';
+import { pickTaunt } from '../lib/taunts';
 import type { GardenState } from '../lib/garden';
 
 const WEDDING_DATE = '2027-12-11';
@@ -19,9 +20,11 @@ export default function ReadyScreen({ fitness, garden, pendingCount, latestWeigh
   const daysToWedding = daysUntil(WEDDING_DATE);
   // Rounded to 1dp to avoid floating point noise (e.g. 82.3 - 79 = 3.3000000000000007).
   const kgToGoal = latestWeightKg !== undefined ? Math.round((latestWeightKg - TARGET_WEIGHT_KG) * 10) / 10 : undefined;
+  const taunt = pickTaunt(fitness, todayISO());
 
   return (
     <div className="ready-screen">
+      <div className="avatar-speech-bubble">{taunt}</div>
       <AvatarCoach fitness={fitness} size="lg" />
       <GardenBed garden={garden} />
       <p className="ready-status">{fitnessLabel(fitness)}</p>
