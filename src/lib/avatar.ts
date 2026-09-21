@@ -8,13 +8,14 @@ const RECENT_WINDOW = 14;
  * green counts half, red counts for nothing. Sick days are excluded
  * entirely rather than counted as neutral, so they don't use up a slot
  * in the recent window or nudge the average either way. With no
- * (non-sick) history yet the coach starts at a neutral midpoint rather
- * than looking unwell.
+ * (non-sick) history yet the coach starts at rock bottom — no habits
+ * logged is treated the same as a bad streak, not given the benefit
+ * of the doubt.
  */
 export function computeFitness(entries: DayEntry[]): number {
   const healthTracked = entries.filter((e) => e.bean !== 'white');
   const recent = healthTracked.slice(-RECENT_WINDOW);
-  if (recent.length === 0) return 0.5;
+  if (recent.length === 0) return 0;
 
   const weight = { gold: 1, green: 0.55, red: 0, white: 0 } as const;
   const total = recent.reduce((sum, e) => sum + weight[e.bean], 0);
