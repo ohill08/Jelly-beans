@@ -25,6 +25,7 @@ const FLOOR_PAD = 6;
 interface Placed {
   date: string;
   bean: BeanColor;
+  exercised: boolean;
   x: number;
   bottom: number;
   yJitter: number;
@@ -69,7 +70,7 @@ function packBeans(entries: DayEntry[]) {
     const rawX = bestBin * BIN_W + (BIN_W - BEAN_W) / 2 + jitterX;
     const x = Math.max(0, Math.min(JAR_W - BEAN_W, rawX));
 
-    placed.push({ date: entry.date, bean: entry.bean, x, bottom: resting, yJitter, rot });
+    placed.push({ date: entry.date, bean: entry.bean, exercised: entry.answers.exercised, x, bottom: resting, yJitter, rot });
 
     const newHeight = resting + BEAN_H * NEST;
     heights[bestBin] = newHeight;
@@ -104,12 +105,16 @@ export default function JellyBeanJar({ entries, justAddedDate }: Props) {
         <div className="jar-beans">
           {isEmpty && <p className="jar-empty">Your jar is waiting for its first jelly bean.</p>}
           <div className="jar-beans-stack" style={{ height: stackHeight }}>
-            {placed.map(({ date, bean, x, bottom, yJitter, rot }) => {
+            {placed.map(({ date, bean, exercised, x, bottom, yJitter, rot }) => {
               const isNew = date === justAddedDate;
+              // A green bean earned on a day you also exercised (but didn't
+              // clear the gold bar) gets a darker shade, so a glance at the
+              // jar shows roughly how many exercise days are in there.
+              const variant = bean === 'green' && exercised ? 'green-exercised' : bean;
               return (
                 <span
                   key={date}
-                  className={`bean bean-${bean}${isNew ? ' bean-drop' : ''}`}
+                  className={`bean bean-${variant}${isNew ? ' bean-drop' : ''}`}
                   style={
                     {
                       left: `${x}px`,
@@ -117,7 +122,7 @@ export default function JellyBeanJar({ entries, justAddedDate }: Props) {
                       rotate: `${rot}deg`,
                     } as CSSProperties
                   }
-                  title={`${date}: ${bean}`}
+                  title={`${date}: ${bean}${variant === 'green-exercised' ? ' (exercised)' : ''}`}
                 />
               );
             })}

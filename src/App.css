@@ -571,6 +571,12 @@
   background: linear-gradient(135deg, #9be6ac, var(--green));
 }
 
+/* A green bean earned on a day you also exercised — darker, so exercise
+   days stand out from the rest of the pile at a glance. */
+.bean-green-exercised {
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+}
+
 .bean-red {
   background: linear-gradient(135deg, #ff9a9a, var(--red));
 }
