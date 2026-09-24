@@ -3,6 +3,8 @@ import { lerp, lerpColor3, project } from '../lib/svgMath';
 
 interface Props {
   fitness: number; // 0..1
+  /** Exercised at least once in the last 7 days — shows a headband. */
+  exercisedRecently?: boolean;
   size?: 'sm' | 'lg';
 }
 
@@ -13,7 +15,7 @@ interface Props {
  * with `fitness` (0..1): squat, dull and slumped at the low end, tall,
  * vivid and bouncy at the high end.
  */
-export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
+export default function AvatarCoach({ fitness, exercisedRecently = false, size = 'sm' }: Props) {
   const f = Math.max(0, Math.min(1, fitness));
   const cx = 70;
   const groundY = 192;
@@ -93,6 +95,12 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
   const sweatX = cx + headR * 0.75;
   const sweatY = headCy - headR * 0.3;
 
+  // Headband: sits above the eyebrows, its width following the head's own
+  // curvature at that height so it reads as wrapping around, not floating.
+  const bandDy = headR * 0.62;
+  const bandY = headCy - bandDy;
+  const bandHalfW = Math.sqrt(headR * headR - bandDy * bandDy) * 0.92;
+
   return (
     <div className={`avatar-coach${size === 'lg' ? ' avatar-coach-lg' : ''}`}>
       <svg
@@ -143,6 +151,24 @@ export default function AvatarCoach({ fitness, size = 'sm' }: Props) {
           {/* hair tuft, on top of the head so it stays visible however it droops */}
           <line x1={tuftBase.x} y1={tuftBase.y} x2={tuftTip.x} y2={tuftTip.y} stroke={bodyColor} strokeWidth="3" strokeLinecap="round" />
           <circle cx={tuftTip.x} cy={tuftTip.y} r={tuftBallR} fill={bodyColor} />
+
+          {/* headband: worn whenever they've exercised in the last week */}
+          {exercisedRecently && (
+            <g>
+              <line x1={cx - bandHalfW} y1={bandY} x2={cx + bandHalfW} y2={bandY} stroke="#ff6b4a" strokeWidth="6" strokeLinecap="round" />
+              <line
+                x1={cx - bandHalfW}
+                y1={bandY - 1.6}
+                x2={cx + bandHalfW}
+                y2={bandY - 1.6}
+                stroke="#ffe1d6"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                opacity="0.8"
+              />
+              <circle cx={cx - bandHalfW} cy={bandY} r="2.6" fill="#e14f2f" />
+            </g>
+          )}
 
           {/* face */}
           <path

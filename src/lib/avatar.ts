@@ -1,6 +1,8 @@
 import type { DayEntry } from './types';
+import { addDays, todayISO } from './dates';
 
 const RECENT_WINDOW = 14;
+const EXERCISE_WINDOW_DAYS = 7;
 
 /**
  * A 0 (rough) .. 1 (peak) score for how the coach avatar should look,
@@ -21,6 +23,12 @@ export function computeFitness(entries: DayEntry[]): number {
   const total = recent.reduce((sum, e) => sum + weight[e.bean], 0);
   // Round to avoid float drift (e.g. 0.55 * 14 / 14) landing just under a label threshold.
   return Math.round((total / recent.length) * 100) / 100;
+}
+
+/** Whether any of the last 7 calendar days (today inclusive) recorded exercise. */
+export function hasRecentExercise(entries: DayEntry[]): boolean {
+  const cutoff = addDays(todayISO(), -(EXERCISE_WINDOW_DAYS - 1));
+  return entries.some((e) => e.date >= cutoff && e.answers.exercised);
 }
 
 export function fitnessLabel(f: number): string {

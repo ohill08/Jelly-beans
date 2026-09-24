@@ -13,6 +13,7 @@ interface Props {
   initialWeightKg?: number;
   isEdit?: boolean;
   fitness: number;
+  exercisedRecently?: boolean;
 }
 
 interface Question {
@@ -47,6 +48,7 @@ export default function CheckInForm({
   initialWeightKg,
   isEdit,
   fitness,
+  exercisedRecently,
 }: Props) {
   const [draft, setDraft] = useState<Draft>(() =>
     initialAnswers
@@ -90,7 +92,7 @@ export default function CheckInForm({
   return (
     <div className="checkin-card">
       <div className="checkin-asker">
-        <AvatarCoach fitness={fitness} />
+        <AvatarCoach fitness={fitness} exercisedRecently={exercisedRecently} />
         <div className="checkin-bubble">
           <span className="checkin-eyebrow">
             {isEdit

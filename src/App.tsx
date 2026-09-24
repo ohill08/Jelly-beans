@@ -7,7 +7,7 @@ import StatsPanel from './components/StatsPanel';
 import { loadEntries, upsertEntry } from './lib/storage';
 import { getPendingDates } from './lib/queue';
 import { scoreDay } from './lib/scoring';
-import { computeFitness } from './lib/avatar';
+import { computeFitness, hasRecentExercise } from './lib/avatar';
 import { computeGarden } from './lib/garden';
 import { computeWeeklyBeanColor, rgbString } from './lib/theme';
 import type { BeanColor, DayAnswers, DayEntry } from './lib/types';
@@ -51,6 +51,10 @@ function App() {
   );
   const garden = useMemo(
     () => computeGarden(view.mode === 'edit' ? entries.slice(0, -1) : entries),
+    [entries, view.mode],
+  );
+  const exercisedRecently = useMemo(
+    () => hasRecentExercise(view.mode === 'edit' ? entries.slice(0, -1) : entries),
     [entries, view.mode],
   );
 
@@ -109,6 +113,7 @@ function App() {
       <div className="app-shell">
         <ReadyScreen
           fitness={fitness}
+          exercisedRecently={exercisedRecently}
           garden={garden}
           pendingCount={view.pendingCount}
           latestWeightKg={latestWeightKg}
@@ -131,6 +136,7 @@ function App() {
           queuePosition={view.position}
           queueTotal={view.total}
           fitness={fitness}
+          exercisedRecently={exercisedRecently}
           onSubmit={(answers, weightKg) => commitAnswers(view.date, answers, weightKg)}
         />
       )}
@@ -142,6 +148,7 @@ function App() {
           queueTotal={1}
           isEdit
           fitness={fitness}
+          exercisedRecently={exercisedRecently}
           initialAnswers={view.entry.answers}
           initialWeightKg={view.entry.weightKg}
           onSubmit={(answers, weightKg) => commitAnswers(view.date, answers, weightKg)}
